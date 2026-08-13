@@ -524,11 +524,6 @@ public class StatusBar implements LayoutElement, Renderable, GuiEventListener, N
 	}
 
 	public static class HealthStatusBar extends StatusBar {
-		private static final Color WITHER_COLOR = new Color(76, 48, 57);
-		private static final Color POISON_COLOR = new Color(94, 78, 18);
-		private static final Identifier WITHER_ICON = SkyblockerMod.id("bars/icons/health_wither");
-		private static final Identifier POISON_ICON = SkyblockerMod.id("bars/icons/health_poison");
-
 		public HealthStatusBar(StatusBarType type) {
 			super(type);
 		}
@@ -536,19 +531,8 @@ public class StatusBar implements LayoutElement, Renderable, GuiEventListener, N
 		@Override
 		protected void extractBarFill(GuiGraphicsExtractor graphics, int barX, int barWidth) {
 			Minecraft client = Minecraft.getInstance();
-			boolean withering = client.player != null && client.player.hasEffect(MobEffects.WITHER);
-			boolean poisoned = client.player != null && client.player.hasEffect(MobEffects.POISON);
-
-			int fillColor;
-			if (withering) {
-				fillColor = WITHER_COLOR.getRGB();
-			} else if (poisoned) {
-				fillColor = POISON_COLOR.getRGB();
-			} else {
-				fillColor = getColors()[0].getRGB();
-			}
-
-			renderBarFill(graphics, barX, barWidth, fill, transparency(fillColor));
+			
+			renderBarFill(graphics, barX, barWidth, fill, transparency(getColors()[0].getRGB()));
 			if (hasOverflow() && overflowFill > 0) {
 				renderBarFill(graphics, barX, barWidth, Math.min(overflowFill, 1), transparency(getColors()[1].getRGB()));
 			}
@@ -556,11 +540,6 @@ public class StatusBar implements LayoutElement, Renderable, GuiEventListener, N
 
 		@Override
 		protected Identifier getIcon() {
-			Minecraft client = Minecraft.getInstance();
-			if (client.player != null) {
-				if (client.player.hasEffect(MobEffects.WITHER)) return WITHER_ICON;
-				else if (client.player.hasEffect(MobEffects.POISON)) return POISON_ICON;
-			}
 			return super.getIcon();
 		}
 	}
