@@ -35,7 +35,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.util.StringRepresentable;
-import net.minecraft.world.effect.MobEffects;
 
 public class StatusBar implements LayoutElement, Renderable, GuiEventListener, NarratableEntry {
 	private static final Identifier BAR_FILL = SkyblockerMod.id("bars/bar_fill");
@@ -531,7 +530,7 @@ public class StatusBar implements LayoutElement, Renderable, GuiEventListener, N
 		@Override
 		protected void extractBarFill(GuiGraphicsExtractor graphics, int barX, int barWidth) {
 			Minecraft client = Minecraft.getInstance();
-			
+
 			renderBarFill(graphics, barX, barWidth, fill, transparency(getColors()[0].getRGB()));
 			if (hasOverflow() && overflowFill > 0) {
 				renderBarFill(graphics, barX, barWidth, Math.min(overflowFill, 1), transparency(getColors()[1].getRGB()));
