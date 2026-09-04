@@ -2,8 +2,9 @@ package de.hysky.skyblocker.config.configs;
 
 import java.awt.Color;
 
-import de.hysky.skyblocker.utils.SkyBlockColors;
 import net.minecraft.world.item.DyeColor;
+
+import de.hysky.skyblocker.utils.SkyBlockColors;
 
 public class HuntingConfig {
 	public HuntingBox huntingBox = new HuntingBox();
@@ -24,7 +25,8 @@ public class HuntingConfig {
 
 	public FloorDrops floorDrops = new FloorDrops();
 
-	public LassoHud lassoHud = new LassoHud();
+	@Deprecated
+	public transient LassoHud lassoHud = new LassoHud();
 
 	public static class HuntingBox {
 		public boolean enabled = true;

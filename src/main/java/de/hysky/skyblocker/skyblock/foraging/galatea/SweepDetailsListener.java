@@ -1,42 +1,45 @@
 package de.hysky.skyblocker.skyblock.foraging.galatea;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.mojang.logging.LogUtils;
-import de.hysky.skyblocker.config.SkyblockerConfigManager;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.slf4j.Logger;
+
+import net.minecraft.network.chat.Component;
+
+import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.WidgetManager;
 import de.hysky.skyblocker.utils.SkyBlockIcons;
 import de.hysky.skyblocker.utils.Utils;
 import de.hysky.skyblocker.utils.chat.ChatFilterResult;
 import de.hysky.skyblocker.utils.chat.ChatMessageListener;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.slf4j.Logger;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("RegExpRepeatedSpace") // followup messages have 2 leading spaces
 public class SweepDetailsListener implements ChatMessageListener {
 	// Used to keep cancelled sweep messages in logs
 	private static final Logger LOGGER = LogUtils.getLogger();
-	protected static final Pattern SWEEP_DETAILS = Pattern.compile(String.format("Sweep Details: ([\\d.]+)[∮%s] Sweep", SkyBlockIcons.SWEEP));
+	protected static final Pattern SWEEP_DETAILS = Pattern.compile(String.format("Sweep Details: ([\\d,.]+)[∮%s] Sweep", SkyBlockIcons.SWEEP));
 	protected static final Pattern TREE_TOUGHNESS = Pattern.compile("  (.+?) Tree Toughness: ([\\d.]+) ([\\d.]+) Logs");
 	protected static final Pattern AXE_THROW_PENALTY = Pattern.compile("  Axe throw: (-\\d+)% Sweep ([\\d.]+) Logs");
 	protected static final Pattern WRONG_STYLE_PENALTY = Pattern.compile("  Wrong Style: (-\\d+)% Sweep ([\\d.]+) Logs ([a-zA-Z ]*)!!");
+	protected static final long TIMEOUT_MS = 5_000;
 
 	public static boolean active = false;
-	public static float lastMatch = -1;
+	public static long lastMatch = -1;
 
 	public static float maxSweep = -1;
 	public static float lastSweep = -1;
 	public static String lastTreeType = "Unknown";
-	public static String toughness;
-	public static String logs;
+	public static String toughness = "";
+	public static String logs = "";
 	public static boolean axePenalty;
 	public static float axePenaltyAmount;
 	public static boolean stylePenalty;
 	public static float stylePenaltyAmount;
-	public static String correctStyle;
+	public static String correctStyle = "";
 
-	private static void resetStats() {
+	protected static void resetStats() {
 		active = false;
 		lastMatch = -1;
 		maxSweep = -1;
@@ -70,7 +73,7 @@ public class SweepDetailsListener implements ChatMessageListener {
 	@Override
 	public ChatFilterResult onMessage(Component message, String asString) {
 		if (!SweepDetailsHudWidget.LOCATIONS.contains(Utils.getLocation())) return ChatFilterResult.PASS;
-		if (!SkyblockerConfigManager.get().foraging.moongladeMarsh.enableSweepDetailsWidget) return ChatFilterResult.PASS;
+		if (!WidgetManager.isWidgetInCurrentScreen(SweepDetailsHudWidget.INSTANCE)) return ChatFilterResult.PASS;
 		String msg = message.getString();
 
 		Matcher sweepDetails = SWEEP_DETAILS.matcher(msg);
@@ -79,7 +82,7 @@ public class SweepDetailsListener implements ChatMessageListener {
 			active = true;
 			lastMatch = System.currentTimeMillis();
 
-			String rawMaxSweep = sweepDetails.group(1);
+			String rawMaxSweep = sweepDetails.group(1).replace(",", "");
 			if (NumberUtils.isCreatable(rawMaxSweep)) {
 				maxSweep = Float.parseFloat(rawMaxSweep);
 			} else {
@@ -91,7 +94,7 @@ public class SweepDetailsListener implements ChatMessageListener {
 			return ChatFilterResult.FILTER;
 		}
 
-		if (active && System.currentTimeMillis() > lastMatch + 1_000) active = false;
+		if (active && System.currentTimeMillis() > lastMatch + TIMEOUT_MS) resetStats();
 		if (!active) return ChatFilterResult.PASS;
 
 		Matcher treeToughness = TREE_TOUGHNESS.matcher(msg);

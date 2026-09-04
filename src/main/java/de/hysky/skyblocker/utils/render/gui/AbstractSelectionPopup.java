@@ -1,5 +1,11 @@
 package de.hysky.skyblocker.utils.render.gui;
 
+import java.util.Collection;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import org.jspecify.annotations.Nullable;
+
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -7,11 +13,6 @@ import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import org.jspecify.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 public abstract class AbstractSelectionPopup<W extends AbstractWidget> extends AbstractPopupScreen {
 	private final Consumer<Optional<W>> onDone;
@@ -30,7 +31,8 @@ public abstract class AbstractSelectionPopup<W extends AbstractWidget> extends A
 	@Override
 	public void init() {
 		GridLayout.RowHelper adder = gridWidget.createRowHelper(2);
-		addRenderableWidget(adder.addChild(new ItemList(300, (int) (height * 0.8f)), 2));
+		adder.defaultCellSetting().alignHorizontallyCenter();
+		addRenderableWidget(adder.addChild(new ItemList(326, (int) (height * 0.8f)), 2));
 		addRenderableWidget(adder.addChild(Button.builder(CommonComponents.GUI_CANCEL, _ -> {
 			onClose();
 			onDone.accept(Optional.empty());
@@ -67,7 +69,7 @@ public abstract class AbstractSelectionPopup<W extends AbstractWidget> extends A
 	private class ItemList extends SearchableGridWidget {
 
 		private ItemList(int width, int height) {
-			super(0, 0, width, height, Component.literal("Item List"), expectedWidgetWidth);
+			super(0, 0, width, height, Component.literal("Item List"), expectedWidgetWidth, true);
 			setSearch("");
 		}
 

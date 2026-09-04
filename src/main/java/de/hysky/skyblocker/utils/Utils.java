@@ -1,21 +1,25 @@
 package de.hysky.skyblocker.utils;
 
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.OptionalInt;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.Blaze3D;
 import com.mojang.logging.LogUtils;
 import com.mojang.util.UndashedUuid;
-
-import de.hysky.skyblocker.SkyblockerMod;
-import de.hysky.skyblocker.annotations.Init;
-import de.hysky.skyblocker.events.SkyblockEvents;
-import de.hysky.skyblocker.mixins.accessors.ChatListenerAccessor;
-import de.hysky.skyblocker.skyblock.slayers.SlayerManager;
-import de.hysky.skyblocker.utils.purse.PurseChangeCause;
-import de.hysky.skyblocker.utils.scheduler.MessageScheduler;
-import de.hysky.skyblocker.utils.scheduler.Scheduler;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.azureaaron.hmapi.data.rank.PackageRank;
 import net.azureaaron.hmapi.data.rank.RankType;
 import net.azureaaron.hmapi.data.server.Environment;
@@ -48,18 +52,15 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
-import org.jetbrains.annotations.VisibleForTesting;
-import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.OptionalInt;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import de.hysky.skyblocker.SkyblockerMod;
+import de.hysky.skyblocker.annotations.Init;
+import de.hysky.skyblocker.events.SkyblockEvents;
+import de.hysky.skyblocker.mixins.accessors.ChatListenerAccessor;
+import de.hysky.skyblocker.skyblock.slayers.SlayerManager;
+import de.hysky.skyblocker.utils.purse.PurseChangeCause;
+import de.hysky.skyblocker.utils.scheduler.MessageScheduler;
+import de.hysky.skyblocker.utils.scheduler.Scheduler;
 
 /**
  * Utility variables and methods for retrieving Skyblock related information.
@@ -78,6 +79,7 @@ public class Utils {
 	private static final Pattern PURSE = Pattern.compile("(Purse|Piggy): (?<purse>[0-9,.]+)( \\((?<change>[+\\-][0-9,.]+)\\))?");
 	private static boolean isOnHypixel = false;
 	private static boolean isOnSkyblock = false;
+	private static boolean isGuest = false;
 
 	/**
 	 * The player's rank.
@@ -210,6 +212,10 @@ public class Utils {
 
 	public static boolean isOnBingo() {
 		return profile.endsWith("Ⓑ");
+	}
+
+	public static boolean isGuest() {
+		return isGuest;
 	}
 
 	/**
@@ -384,7 +390,7 @@ public class Utils {
 			if (world == null) return;
 
 			Scoreboard scoreboard = world.getScoreboard();
-			Objective objective = scoreboard.getDisplayObjective(DisplaySlot.BY_ID.apply(1));
+			Objective objective = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
 			ObjectArrayList<Component> textLines = new ObjectArrayList<>();
 			ObjectArrayList<String> stringLines = new ObjectArrayList<>();
 
@@ -421,6 +427,7 @@ public class Utils {
 				Utils.updatePurse();
 				SlayerManager.checkSlayerQuest();
 				updateArea();
+				isGuest = !STRING_SCOREBOARD.isEmpty() && STRING_SCOREBOARD.getFirst().trim().endsWith("GUEST");
 			}
 		} catch (NullPointerException _) {
 			//Do nothing

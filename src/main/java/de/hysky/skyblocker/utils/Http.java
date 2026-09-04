@@ -1,8 +1,5 @@
 package de.hysky.skyblocker.utils;
 
-import de.hysky.skyblocker.SkyblockerMod;
-import net.minecraft.SharedConstants;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -20,6 +17,10 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
 import org.jspecify.annotations.Nullable;
+
+import net.minecraft.SharedConstants;
+
+import de.hysky.skyblocker.SkyblockerMod;
 
 /**
  * @implNote All http requests are sent using HTTP 2
@@ -45,7 +46,11 @@ public class Http {
 				.version(Version.HTTP_2)
 				.uri(URI.create(url));
 
-		if (token != null) requestBuilder.header("Authorization", "Bearer " + token);
+		if (token != null) {
+			String headerName = url.startsWith(HYPIXEL_PROXY) ? "Hysky-Authorization" : "Authorization";
+
+			requestBuilder.header(headerName, "Bearer " + token);
+		}
 
 		HttpRequest request = requestBuilder.build();
 		HttpResponse<InputStream> response = HTTP_CLIENT.send(request, BodyHandlers.ofInputStream());

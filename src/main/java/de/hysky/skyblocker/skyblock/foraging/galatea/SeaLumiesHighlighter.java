@@ -1,12 +1,7 @@
 package de.hysky.skyblocker.skyblock.foraging.galatea;
 
-import de.hysky.skyblocker.annotations.Init;
-import de.hysky.skyblocker.config.SkyblockerConfigManager;
-import de.hysky.skyblocker.skyblock.foraging.AbstractBlockHighlighter;
-import de.hysky.skyblocker.utils.Utils;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Iterator;
-import java.util.Set;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -17,17 +12,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 
+import de.hysky.skyblocker.annotations.Init;
+import de.hysky.skyblocker.config.SkyblockerConfigManager;
+import de.hysky.skyblocker.skyblock.foraging.AbstractBlockHighlighter;
+import de.hysky.skyblocker.utils.BlockPosSet;
+import de.hysky.skyblocker.utils.Utils;
+
 public final class SeaLumiesHighlighter extends AbstractBlockHighlighter {
 	public static final SeaLumiesHighlighter INSTANCE = new SeaLumiesHighlighter();
-	private final Set<BlockPos> allBlocks = new ObjectOpenHashSet<>();
+	private final BlockPosSet allBlocks = new BlockPosSet();
 
 	@Override
 	protected void onBlockUpdate(BlockPos pos, BlockState oldState, BlockState newState) {
 		if (!shouldProcess()) return;
 
 		if (this.statePredicate.test(newState)) {
-			this.allBlocks.add(pos.immutable());
-			if (isEnabled() && isEnoughPickles(newState)) this.highlightedBlocks.add(pos.immutable());
+			this.allBlocks.add(pos);
+			if (isEnabled() && isEnoughPickles(newState)) this.highlightedBlocks.add(pos);
 		} else {
 			this.allBlocks.remove(pos);
 			this.highlightedBlocks.remove(pos);
@@ -63,8 +64,8 @@ public final class SeaLumiesHighlighter extends AbstractBlockHighlighter {
 		if (!shouldProcess()) return;
 
 		chunk.findBlocks(statePredicate, (pos, state) -> {
-			this.allBlocks.add(pos.immutable());
-			if (isEnabled() && isEnoughPickles(state)) this.highlightedBlocks.add(pos.immutable());
+			this.allBlocks.add(pos);
+			if (isEnabled() && isEnoughPickles(state)) this.highlightedBlocks.add(pos);
 		});
 	}
 

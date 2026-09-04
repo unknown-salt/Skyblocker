@@ -1,21 +1,11 @@
 package de.hysky.skyblocker.skyblock.dwarven;
 
-import de.hysky.skyblocker.annotations.Init;
-import de.hysky.skyblocker.config.SkyblockerConfigManager;
-import de.hysky.skyblocker.skyblock.tabhud.util.PlayerListManager;
-import de.hysky.skyblocker.utils.Area;
-import de.hysky.skyblocker.utils.ColorUtils;
-import de.hysky.skyblocker.utils.ItemAbility;
-import de.hysky.skyblocker.utils.Utils;
-import de.hysky.skyblocker.utils.render.LevelRenderExtractionCallback;
-import de.hysky.skyblocker.utils.render.primitive.PrimitiveCollector;
-import de.hysky.skyblocker.utils.scheduler.Scheduler;
-import org.jspecify.annotations.Nullable;
-
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -29,6 +19,19 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+
+import de.hysky.skyblocker.annotations.Init;
+import de.hysky.skyblocker.config.SkyblockerConfigManager;
+import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.WidgetManager;
+import de.hysky.skyblocker.skyblock.tabhud.util.PlayerListManager;
+import de.hysky.skyblocker.utils.Area;
+import de.hysky.skyblocker.utils.BlockPosSet;
+import de.hysky.skyblocker.utils.ColorUtils;
+import de.hysky.skyblocker.utils.ItemAbility;
+import de.hysky.skyblocker.utils.Utils;
+import de.hysky.skyblocker.utils.render.LevelRenderExtractionCallback;
+import de.hysky.skyblocker.utils.render.primitive.PrimitiveCollector;
+import de.hysky.skyblocker.utils.scheduler.Scheduler;
 
 public class PickobulusHelper {
 	private static final Set<Block> CONVERT_INTO_BEDROCK_BLOCKS = Set.of(
@@ -102,7 +105,7 @@ public class PickobulusHelper {
 	private static boolean shouldRender;
 	private static @Nullable Component errorMessage;
 	private static final BlockState[][][] blocks = new BlockState[8][8][8];
-	private static final Set<BlockPos> breakBlocks = new HashSet<>();
+	private static final BlockPosSet breakBlocks = new BlockPosSet();
 	private static final int[] drops = new int[MiningDrop.values().length];
 
 	public static boolean shouldRender() {
@@ -128,7 +131,7 @@ public class PickobulusHelper {
 	}
 
 	private static void update() {
-		if (!(SkyblockerConfigManager.get().mining.enablePickobulusHelper || SkyblockerConfigManager.get().mining.pickobulusHelper.enablePickobulusHud)) return;
+		if (!SkyblockerConfigManager.get().mining.pickobulusHelper.enablePickobulusHelper && !WidgetManager.isWidgetInCurrentScreen(PickobulusHudWidget.getInstance())) return;
 
 		shouldRender = true;
 		errorMessage = null;
@@ -302,7 +305,7 @@ public class PickobulusHelper {
 	}
 
 	private static void extractRendering(PrimitiveCollector collector) {
-		if (!SkyblockerConfigManager.get().mining.enablePickobulusHelper) return;
+		if (!SkyblockerConfigManager.get().mining.pickobulusHelper.enablePickobulusHelper) return;
 		for (BlockPos breakPos : breakBlocks) {
 			collector.submitOutlinedBox(breakPos, LIGHT_BLUE, 2f, false);
 		}

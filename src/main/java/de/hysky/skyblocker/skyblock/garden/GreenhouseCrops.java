@@ -1,14 +1,16 @@
 package de.hysky.skyblocker.skyblock.garden;
 
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.jspecify.annotations.Nullable;
+
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+
 import de.hysky.skyblocker.skyblock.item.HeadTextures;
 import de.hysky.skyblocker.utils.FlexibleItemStack;
 import de.hysky.skyblocker.utils.ItemUtils;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import org.jspecify.annotations.Nullable;
-
-import java.util.Map;
-import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
 public final class GreenhouseCrops {
@@ -99,16 +101,16 @@ public final class GreenhouseCrops {
 		String armorStandName,
 		int id,
 		boolean isHead,
-		@Nullable Block cropBlock,
+		Block cropBlock,
 		@Nullable String headSkin,
-		@Nullable FlexibleItemStack displayStack
+		FlexibleItemStack displayStack
 	) {
 		public Crop(String name, String armorStandName, int id, String headSkin) {
-			this(name, armorStandName, id, true, null, headSkin, ItemUtils.createSkull(headSkin));
+			this(name, armorStandName, id, true, Blocks.AIR, headSkin, ItemUtils.createSkull(headSkin));
 		}
 
 		public Crop(String name, String armorStandName, int id, Block cropBlock) {
-			this(name, armorStandName, id, false, cropBlock, null, null);
+			this(name, armorStandName, id, false, cropBlock, null, FlexibleItemStack.EMPTY);
 		}
 	}
 }

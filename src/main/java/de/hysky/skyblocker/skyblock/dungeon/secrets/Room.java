@@ -1,22 +1,32 @@
 package de.hysky.skyblocker.skyblock.dungeon.secrets;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.serialization.Codec;
-import de.hysky.skyblocker.config.SkyblockerConfigManager;
-import de.hysky.skyblocker.events.DungeonEvents;
-import de.hysky.skyblocker.utils.Constants;
-import de.hysky.skyblocker.utils.Tickable;
-import de.hysky.skyblocker.utils.Utils;
-import de.hysky.skyblocker.utils.render.RenderHelper;
-import de.hysky.skyblocker.utils.render.Renderable;
-import de.hysky.skyblocker.utils.render.primitive.PrimitiveCollector;
-import de.hysky.skyblocker.utils.scheduler.Scheduler;
 import it.unimi.dsi.fastutil.ints.IntRBTreeSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSets;
+import org.apache.commons.lang3.tuple.MutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
+import org.jspecify.annotations.Nullable;
+
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.Minecraft;
@@ -34,25 +44,17 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
-import org.apache.commons.lang3.tuple.MutableTriple;
-import org.apache.commons.lang3.tuple.Triple;
-import org.joml.Vector2i;
-import org.joml.Vector2ic;
-import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import de.hysky.skyblocker.config.SkyblockerConfigManager;
+import de.hysky.skyblocker.events.DungeonEvents;
+import de.hysky.skyblocker.utils.BlockPosSet;
+import de.hysky.skyblocker.utils.Constants;
+import de.hysky.skyblocker.utils.Tickable;
+import de.hysky.skyblocker.utils.Utils;
+import de.hysky.skyblocker.utils.render.RenderHelper;
+import de.hysky.skyblocker.utils.render.Renderable;
+import de.hysky.skyblocker.utils.render.primitive.PrimitiveCollector;
+import de.hysky.skyblocker.utils.scheduler.Scheduler;
 
 public class Room implements Tickable, Renderable {
 	public static final Pattern SECRET_INDEX = Pattern.compile("^(\\d+)");
@@ -91,7 +93,7 @@ public class Room implements Tickable, Renderable {
 	 * Contains all blocks that have been checked to prevent checking the same block multiple times.
 	 * This is null after the room is matched.
 	 */
-	private @Nullable Set<BlockPos> checkedBlocks = new HashSet<>();
+	private @Nullable BlockPosSet checkedBlocks = new BlockPosSet();
 	/**
 	 * The task that is used to check blocks. This is used to ensure only one such task can run at a time.
 	 */
@@ -536,7 +538,7 @@ public class Room implements Tickable, Renderable {
 		IntSortedSet segmentsX = IntSortedSets.unmodifiable(new IntRBTreeSet(segments.stream().mapToInt(Vector2ic::x).toArray()));
 		IntSortedSet segmentsY = IntSortedSets.unmodifiable(new IntRBTreeSet(segments.stream().mapToInt(Vector2ic::y).toArray()));
 		possibleRooms = getPossibleRooms(segmentsX, segmentsY);
-		checkedBlocks = new HashSet<>();
+		checkedBlocks = new BlockPosSet();
 		doubleCheckBlocks = 0;
 		secretWaypoints.clear();
 		name = null;

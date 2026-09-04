@@ -1,14 +1,13 @@
 package de.hysky.skyblocker.skyblock.foraging.galatea;
 
-import de.hysky.skyblocker.annotations.RegisterWidget;
-import de.hysky.skyblocker.config.SkyblockerConfigManager;
-import de.hysky.skyblocker.skyblock.tabhud.config.WidgetsConfigurationScreen;
-import de.hysky.skyblocker.skyblock.tabhud.util.Ico;
-import de.hysky.skyblocker.skyblock.tabhud.widget.ElementBasedWidget;
-import de.hysky.skyblocker.utils.FlexibleItemStack;
-import de.hysky.skyblocker.utils.Location;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jspecify.annotations.Nullable;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -16,18 +15,18 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.Vec3;
-import org.jspecify.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import de.hysky.skyblocker.annotations.RegisterWidget;
+import de.hysky.skyblocker.skyblock.tabhud.util.Ico;
+import de.hysky.skyblocker.skyblock.tabhud.widget.ElementBasedWidget;
+import de.hysky.skyblocker.skyblock.tabhud.widget.element.ElementCollector;
+import de.hysky.skyblocker.utils.FlexibleItemStack;
+import de.hysky.skyblocker.utils.Location;
 
 @RegisterWidget
 public class TreeBreakProgressHud extends ElementBasedWidget {
 
 	private static final Minecraft CLIENT = Minecraft.getInstance();
-	private static final Set<Location> AVAILABLE_LOCATIONS = Set.of(Location.GALATEA, Location.TORRHUS_CANYON);
 	private static @Nullable TreeBreakProgressHud instance;
 	private static final Int2ObjectMap<ArmorStand> armorstands = new Int2ObjectOpenHashMap<>();
 
@@ -36,7 +35,7 @@ public class TreeBreakProgressHud extends ElementBasedWidget {
 	}
 
 	public TreeBreakProgressHud() {
-		super(Component.literal("Tree Break Progress").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD), ChatFormatting.GREEN.getColor(), "hud_treeprogress");
+		super(Component.literal("Tree Break Progress").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD), ChatFormatting.GREEN.getColor(), new Information("hud_treeprogress", Component.literal("Tree Break Progress"), Location.GALATEA, Location.TORRHUS_CANYON));
 		instance = this;
 		update();
 	}
@@ -57,25 +56,8 @@ public class TreeBreakProgressHud extends ElementBasedWidget {
 	}
 
 	@Override
-	public Set<Location> availableLocations() {
-		return AVAILABLE_LOCATIONS;
-	}
-
-	@Override
-	public void setEnabledIn(Location location, boolean enabled) {
-		if (!availableLocations().contains(location))
-			return;
-		SkyblockerConfigManager.update(config -> config.foraging.moongladeMarsh.enableTreeBreakProgress = enabled);
-	}
-
-	@Override
-	public boolean isEnabledIn(Location location) {
-		return availableLocations().contains(location) && SkyblockerConfigManager.get().foraging.moongladeMarsh.enableTreeBreakProgress;
-	}
-
-	@Override
-	public boolean shouldRender(Location location) {
-		return super.shouldRender(location) && isOwnTree(getClosestTree());
+	public boolean shouldRender() {
+		return isOwnTree(getClosestTree());
 	}
 
 	private @Nullable ArmorStand getClosestTree() {
@@ -117,11 +99,6 @@ public class TreeBreakProgressHud extends ElementBasedWidget {
 		ClientLevel world = CLIENT.level;
 		ArmorStand closest;
 
-		if (CLIENT.screen instanceof WidgetsConfigurationScreen) {
-			addSimpleIcoText(Ico.STRIPPED_SPRUCE_WOOD, "Fig Tree ", ChatFormatting.GREEN, "37%");
-			return;
-		}
-
 		if (CLIENT.player == null || world == null)
 			return;
 		closest = getClosestTree();
@@ -134,8 +111,7 @@ public class TreeBreakProgressHud extends ElementBasedWidget {
 	}
 
 	@Override
-	public Component getDisplayName() {
-		return Component.literal("Tree Break Progress HUD");
+	protected void updateConfigContent(ElementCollector collector) {
+		collector.addSimpleIcoText(Ico.STRIPPED_SPRUCE_WOOD, "Fig Tree ", ChatFormatting.GREEN, "37%");
 	}
-
 }

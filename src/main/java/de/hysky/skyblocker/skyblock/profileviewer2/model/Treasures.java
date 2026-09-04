@@ -1,9 +1,12 @@
 package de.hysky.skyblocker.skyblock.profileviewer2.model;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import com.google.gson.annotations.SerializedName;
 
 public class Treasures {
 	public List<Run> runs = List.of();
@@ -12,6 +15,24 @@ public class Treasures {
 	/// Nota Bene: The chests are not grouped by dungeon run, but have a run id that can be used to group them.
 	public List<Chest> chests = List.of();
 	// TODO: add a method to collate runs and chests
+
+	public Map<UUID, List<Chest>> chestsByRun() {
+		Map<UUID, List<Chest>> chestsByRun = this.chests.stream()
+				.collect(Collectors.groupingBy(chest -> chest.runId));
+
+		return chestsByRun;
+	}
+
+	public int totalRuns() {
+		return this.chestsByRun().size();
+	}
+
+	public int runsWithUnclaimedChests() {
+		return (int) this.chestsByRun().entrySet().stream()
+				// Check paid for dungeons and isOpened for kuudra
+				.filter(Predicate.not(entry -> entry.getValue().stream().anyMatch(chest -> chest.paid || chest.isOpened)))
+				.count();
+	}
 
 	public static class Chest {
 		/// The type of chest, either {@code DUNGEON} or {@code KUUDRA}.

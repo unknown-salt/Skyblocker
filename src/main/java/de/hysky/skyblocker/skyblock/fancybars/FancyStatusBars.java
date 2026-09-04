@@ -1,33 +1,5 @@
 package de.hysky.skyblocker.skyblock.fancybars;
 
-import com.google.gson.JsonObject;
-import de.hysky.skyblocker.SkyblockerMod;
-import de.hysky.skyblocker.annotations.Init;
-import de.hysky.skyblocker.config.SkyblockerConfigManager;
-import de.hysky.skyblocker.config.configs.UIAndVisualsConfig;
-import de.hysky.skyblocker.debug.Debug;
-import de.hysky.skyblocker.events.SkyblockEvents;
-import de.hysky.skyblocker.skyblock.StatusBarTracker;
-import de.hysky.skyblocker.utils.Utils;
-import de.hysky.skyblocker.utils.scheduler.Scheduler;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.navigation.ScreenPosition;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
-import org.jetbrains.annotations.VisibleForTesting;
-import org.joml.Matrix3x2fStack;
-import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -44,24 +16,55 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import com.google.gson.JsonObject;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.joml.Matrix3x2fStack;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.navigation.ScreenPosition;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
+
+import de.hysky.skyblocker.SkyblockerMod;
+import de.hysky.skyblocker.annotations.Init;
+import de.hysky.skyblocker.config.SkyblockerConfigManager;
+import de.hysky.skyblocker.config.configs.UIAndVisualsConfig;
+import de.hysky.skyblocker.debug.Debug;
+import de.hysky.skyblocker.events.SkyblockEvents;
+import de.hysky.skyblocker.skyblock.StatusBarTracker;
+import de.hysky.skyblocker.utils.Utils;
+import de.hysky.skyblocker.utils.scheduler.Scheduler;
+
 public class FancyStatusBars {
 	private static final Identifier HUD_LAYER = SkyblockerMod.id("fancy_status_bars");
 	private static final Path FILE = SkyblockerMod.CONFIG_DIR.resolve("status_bars.json");
 	private static final Logger LOGGER = LoggerFactory.getLogger(FancyStatusBars.class);
+	public static final FancyStatusBars INSTANCE = new FancyStatusBars();
 
-	public static BarPositioner barPositioner = new BarPositioner();
-	public static Map<StatusBarType, StatusBar> statusBars = new EnumMap<>(StatusBarType.class);
-	private static boolean updatePositionsNextFrame;
+	public BarPositioner barPositioner = new BarPositioner();
+	public Map<StatusBarType, StatusBar> statusBars = new EnumMap<>(StatusBarType.class);
+	private boolean updatePositionsNextFrame;
 
-	public static boolean isHealthFancyBarEnabled() {
+	public boolean isHealthFancyBarEnabled() {
 		return isBarEnabled(StatusBarType.HEALTH);
 	}
 
-	public static boolean isExperienceFancyBarEnabled() {
+	public boolean isExperienceFancyBarEnabled() {
 		return isBarEnabled(StatusBarType.EXPERIENCE);
 	}
 
-	public static boolean isBarEnabled(StatusBarType type) {
+	public boolean isBarEnabled(StatusBarType type) {
 		StatusBar statusBar = statusBars.get(type);
 		return Debug.isTestEnvironment() || statusBar.enabled || statusBar.inMouse;
 	}
@@ -69,22 +72,26 @@ public class FancyStatusBars {
 	/**
 	 * Called when vitality is first discovered.
 	 */
-	public static void makeVitalityVisible() {
+	public void makeVitalityVisible() {
 		statusBars.get(StatusBarType.VITALITY).visible = true;
 		updatePositionsNextFrame = true;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Init
-	public static void init() {
+	public static void initStatic() {
+		INSTANCE.init();
+	}
+
+	@SuppressWarnings("deprecation")
+	public void init() {
 		Function<HudElement, HudElement> hideIfFancyStatusBarsEnabled = hudElement -> {
-			if (Utils.isOnSkyblock() && isEnabled())
+			if (shouldProcess())
 				return (_, _) -> {};
 			return hudElement;
 		};
 
 		HudElementRegistry.replaceElement(VanillaHudElements.HEALTH_BAR, hudElement -> {
-			if (!Utils.isOnSkyblock() || !isEnabled()) return hudElement;
+			if (!shouldProcess()) return hudElement;
 			if (isHealthFancyBarEnabled()) {
 				return (_, _) -> {};
 			} else if (isExperienceFancyBarEnabled()) {
@@ -99,11 +106,11 @@ public class FancyStatusBars {
 			return hudElement;
 		});
 		HudElementRegistry.replaceElement(VanillaHudElements.EXPERIENCE_LEVEL, hudElement -> {
-			if (!Utils.isOnSkyblock() || !isEnabled() || !isExperienceFancyBarEnabled()) return hudElement;
+			if (!shouldProcess() || !isExperienceFancyBarEnabled()) return hudElement;
 			return (_, _) -> {};
 		});
 		HudElementRegistry.replaceElement(VanillaHudElements.INFO_BAR, hudElement -> {
-			if (!Utils.isOnSkyblock() || !isEnabled() || !isExperienceFancyBarEnabled()) return hudElement;
+			if (!shouldProcess() || !isExperienceFancyBarEnabled()) return hudElement;
 			return (_, _) -> {};
 		});
 		HudElementRegistry.replaceElement(VanillaHudElements.ARMOR_BAR, hideIfFancyStatusBarsEnabled);
@@ -112,7 +119,7 @@ public class FancyStatusBars {
 		HudElementRegistry.replaceElement(VanillaHudElements.AIR_BAR, hideIfFancyStatusBarsEnabled);
 
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, HUD_LAYER, (context, _) -> {
-			if (Utils.isOnSkyblock()) extractRenderState(context, Minecraft.getInstance());
+			if (shouldProcess()) extractRenderState(context, Minecraft.getInstance());
 		});
 
 		for (StatusBarType type : StatusBarType.values()) {
@@ -155,7 +162,7 @@ public class FancyStatusBars {
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> dispatcher.register(
 				ClientCommands.literal(SkyblockerMod.NAMESPACE)
-						.then(ClientCommands.literal("bars").executes(Scheduler.queueOpenScreenCommand(StatusBarsConfigScreen::new)))));
+						.then(ClientCommands.literal("bars").executes(Scheduler.queueOpenScreenCommand(() -> new StatusBarsConfigScreen(this))))));
 
 		SkyblockEvents.LOCATION_CHANGE.register(_ -> updatePositionsNextFrame = true);
 	}
@@ -188,10 +195,10 @@ public class FancyStatusBars {
 		}
 	}
 
-	private static boolean configLoaded = false;
+	private boolean configLoaded = false;
 
 	@VisibleForTesting
-	public static void placeBarsInPositioner() {
+	public void placeBarsInPositioner() {
 		barPositioner.clear();
 		for (BarPositioner.BarAnchor barAnchor : BarPositioner.BarAnchor.allAnchors()) {
 			List<StatusBar> barList = statusBars.values().stream().filter(bar -> bar.anchor == barAnchor)
@@ -211,7 +218,7 @@ public class FancyStatusBars {
 		}
 	}
 
-	public static void resetBarPositions() {
+	public void resetBarPositions() {
 		statusBars.forEach((type, bar) -> {
 			bar.anchor = type.getDefaultAnchor();
 			bar.gridY = type.getDefaultGridY();
@@ -231,7 +238,7 @@ public class FancyStatusBars {
 		return null;
 	}
 
-	public static void saveBarConfig() {
+	public void saveBarConfig() {
 		JsonObject output = new JsonObject();
 		statusBars.forEach((s, statusBar) -> output.add(s.getSerializedName(), statusBar.toJson()));
 		try (BufferedWriter writer = Files.newBufferedWriter(FILE)) {
@@ -242,7 +249,7 @@ public class FancyStatusBars {
 		}
 	}
 
-	public static void updatePositions(boolean ignoreVisibility) {
+	public void updatePositions(boolean ignoreVisibility) {
 		if (!configLoaded) return;
 		final int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
 		final int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
@@ -370,13 +377,17 @@ public class FancyStatusBars {
 		}
 	}
 
-	public static boolean isEnabled() {
+	public boolean shouldProcess() {
+		return Utils.isOnSkyblock() && isEnabled();
+	}
+
+	public boolean isEnabled() {
 		return SkyblockerConfigManager.get().uiAndVisuals.bars.enableBars && (!Utils.isInTheRift() || SkyblockerConfigManager.get().uiAndVisuals.bars.enableBarsRift);
 	}
 
-	public static boolean extractRenderState(GuiGraphicsExtractor graphics, Minecraft client) {
+	public boolean extractRenderState(GuiGraphicsExtractor graphics, Minecraft client) {
 		LocalPlayer player = client.player;
-		if (!isEnabled() || player == null) return false;
+		if (player == null) return false;
 
 		Collection<StatusBar> barCollection = statusBars.values();
 		for (StatusBar statusBar : barCollection) {

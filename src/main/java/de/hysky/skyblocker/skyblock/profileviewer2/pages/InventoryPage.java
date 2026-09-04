@@ -5,6 +5,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import it.unimi.dsi.fastutil.Pair;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.layouts.FrameLayout;
+import net.minecraft.client.gui.layouts.LayoutElement;
+import net.minecraft.client.gui.layouts.LinearLayout;
+import net.minecraft.client.gui.layouts.SpacerElement;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+
 import de.hysky.skyblocker.skyblock.profileviewer2.LoadingInformation;
 import de.hysky.skyblocker.skyblock.profileviewer2.utils.ProfileItemStorage;
 import de.hysky.skyblocker.skyblock.profileviewer2.widgets.ButtonWidget;
@@ -12,18 +25,6 @@ import de.hysky.skyblocker.skyblock.profileviewer2.widgets.InventoryWidget;
 import de.hysky.skyblocker.skyblock.profileviewer2.widgets.PaginationWidget;
 import de.hysky.skyblocker.skyblock.tabhud.util.Ico;
 import de.hysky.skyblocker.utils.FlexibleItemStack;
-import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.StringWidget;
-import net.minecraft.client.gui.layouts.FrameLayout;
-import net.minecraft.client.gui.layouts.LayoutElement;
-import net.minecraft.client.gui.layouts.LayoutSettings;
-import net.minecraft.client.gui.layouts.LinearLayout;
-import net.minecraft.client.gui.layouts.SpacerElement;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
 
 public final class InventoryPage implements ProfileViewerPage<Pair<LoadingInformation, ProfileItemStorage>> {
 	private final List<AbstractWidget> widgets = new ArrayList<>();
@@ -41,7 +42,7 @@ public final class InventoryPage implements ProfileViewerPage<Pair<LoadingInform
 	@Override
 	public CompletableFuture<LayoutElement> load(LoadingInformation info) {
 		return CompletableFuture.completedFuture(info)
-				.thenCombineAsync(info.itemStorage(), (loadingInfo, itemStorage) -> Pair.of(loadingInfo, itemStorage))
+				.thenCombineAsync(info.itemStorage(), Pair::of)
 				.thenApplyAsync(this::buildWidgets, Minecraft.getInstance());
 	}
 
@@ -52,6 +53,7 @@ public final class InventoryPage implements ProfileViewerPage<Pair<LoadingInform
 		ProfileItemStorage itemStorage = data.right();
 
 		LinearLayout pageLayout = LinearLayout.horizontal();
+
 		List<LayoutElement> tabContentLayouts = List.of(
 				this.buildInventoryLayout(itemStorage),
 				this.buildEnderChestLayout(itemStorage),
@@ -76,16 +78,21 @@ public final class InventoryPage implements ProfileViewerPage<Pair<LoadingInform
 				// Personal Vault
 				);
 
+		// Inventory tabs
 		LinearLayout tabLayout = LinearLayout.vertical().spacing(1);
-		tabButtons.forEach(button -> this.widgets.add(tabLayout.addChild(button)));
-		pageLayout.addChild(tabLayout, pageLayout.newCellSettings().alignHorizontallyCenter());
+		tabButtons.forEach(button -> tabLayout.addChild(button));
+		pageLayout.addChild(tabLayout, pageLayout.newCellSettings().alignVerticallyMiddle());
 
+		// Add space between the tabs and the content
 		pageLayout.addChild(SpacerElement.width(16));
 
-		FrameLayout inventoryFrame = new FrameLayout();
-		tabContentLayouts.forEach(layout -> inventoryFrame.addChild(layout, LayoutSettings.defaults().alignHorizontallyCenter()));
+		// One big frame layout with each tab's content overlapping each other
+		FrameLayout contentFrame = new FrameLayout();
+		tabContentLayouts.forEach(layout -> contentFrame.addChild(layout, contentFrame.newChildLayoutSettings().alignHorizontallyCenter().alignVerticallyMiddle()));
+		pageLayout.addChild(contentFrame);
 
-		pageLayout.addChild(inventoryFrame);
+		// Add all widgets
+		pageLayout.visitWidgets(this.widgets::add);
 
 		// Select main page by default
 		selectTab(0, tabContentLayouts);
@@ -96,12 +103,12 @@ public final class InventoryPage implements ProfileViewerPage<Pair<LoadingInform
 	private LayoutElement buildInventoryLayout(ProfileItemStorage itemStorage) {
 		// TODO translatable names
 		LinearLayout layout = LinearLayout.vertical();
-		this.widgets.add(layout.addChild(new InventoryWidget(Component.literal("Inventory"), 4, 9, List.of(itemStorage.inventory()), true)));
+		layout.addChild(new InventoryWidget(Component.literal("Inventory"), 4, 9, List.of(itemStorage.inventory()), true));
 		layout.addChild(SpacerElement.height(6));
 
 		LinearLayout gearLayout = LinearLayout.horizontal().spacing(4);
-		this.widgets.add(gearLayout.addChild(new InventoryWidget(Component.literal("Armour"), 1, 4, List.of(itemStorage.armour()), false)));
-		this.widgets.add(gearLayout.addChild(new InventoryWidget(Component.literal("Equipment"), 1, 4, List.of(itemStorage.equipment()), false)));
+		gearLayout.addChild(new InventoryWidget(Component.literal("Armour"), 1, 4, List.of(itemStorage.armour()), false));
+		gearLayout.addChild(new InventoryWidget(Component.literal("Equipment"), 1, 4, List.of(itemStorage.equipment()), false));
 		layout.addChild(gearLayout, layout.newCellSettings().alignHorizontallyCenter());
 
 		return layout;
@@ -161,7 +168,7 @@ public final class InventoryPage implements ProfileViewerPage<Pair<LoadingInform
 	private LayoutElement buildPaginatedLayout(Component name, int rows, List<List<ItemStack>> pages) {
 		LinearLayout layout = LinearLayout.vertical();
 		InventoryWidget inventory = new InventoryWidget(name, rows, 9, pages, false);
-		this.widgets.add(layout.addChild(inventory));
+		layout.addChild(inventory);
 
 		if (pages.size() > 1) {
 			layout.addChild(SpacerElement.height(8));
@@ -185,9 +192,9 @@ public final class InventoryPage implements ProfileViewerPage<Pair<LoadingInform
 			pageText.setMessage(Component.literal(String.format("Page %d/%d", inventory.getPage(), inventory.getMaxPages())));
 		};
 
-		this.widgets.add(layout.addChild(new PaginationWidget(false, backwards)));
-		this.widgets.add(layout.addChild(pageText, layout.newCellSettings().alignVerticallyMiddle()));
-		this.widgets.add(layout.addChild(new PaginationWidget(true, forwards)));
+		layout.addChild(new PaginationWidget(false, backwards));
+		layout.addChild(pageText, layout.newCellSettings().alignVerticallyMiddle());
+		layout.addChild(new PaginationWidget(true, forwards));
 
 		return layout;
 	}

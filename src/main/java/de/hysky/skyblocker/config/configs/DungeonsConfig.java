@@ -1,10 +1,12 @@
 package de.hysky.skyblocker.config.configs;
 
-import de.hysky.skyblocker.skyblock.dungeon.DungeonMapLabels;
-import de.hysky.skyblocker.utils.waypoint.Waypoint;
 import java.awt.Color;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
+
+import de.hysky.skyblocker.skyblock.dungeon.DungeonMapLabels;
+import de.hysky.skyblocker.utils.waypoint.Waypoint;
 
 public class DungeonsConfig {
 	public boolean fancyPartyFinder = false;
@@ -31,7 +33,8 @@ public class DungeonsConfig {
 
 	public boolean allowDroppingProtectedItems = false;
 
-	public boolean dungeonSplits = false;
+	@Deprecated
+	public transient boolean dungeonSplits = false;
 
 	public boolean hideSoulweaverSkulls = false;
 

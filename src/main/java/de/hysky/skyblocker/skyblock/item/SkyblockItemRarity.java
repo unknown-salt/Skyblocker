@@ -2,15 +2,21 @@ package de.hysky.skyblocker.skyblock.item;
 
 import java.util.Arrays;
 import java.util.Optional;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TextColor;
-import net.minecraft.util.ARGB;
-import net.minecraft.util.StringRepresentable;
+
 import com.google.common.collect.Streams;
 import com.mojang.serialization.Codec;
+import io.github.moulberry.repo.data.Rarity;
+import org.jspecify.annotations.Nullable;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.StringRepresentable;
+
 import de.hysky.skyblocker.utils.EnumUtils;
 import de.hysky.skyblocker.utils.SkyBlockColors;
-import io.github.moulberry.repo.data.Rarity;
+import de.hysky.skyblocker.utils.SkyBlockTooltipStyles;
 
 public enum SkyblockItemRarity implements StringRepresentable {
 	COMMON(ChatFormatting.WHITE),
@@ -66,7 +72,7 @@ public enum SkyblockItemRarity implements StringRepresentable {
 			case RARE -> 8;
 			case EPIC -> 12;
 			case LEGENDARY -> 16;
-			case MYTHIC -> 22;
+			case MYTHIC, ADMIN -> 22;
 			case DIVINE -> 28;
 			default -> 1;
 		};
@@ -99,6 +105,23 @@ public enum SkyblockItemRarity implements StringRepresentable {
 			case SkyblockItemRarity.VERY_SPECIAL -> Rarity.VERY_SPECIAL;
 			case SkyblockItemRarity.ULTIMATE -> Rarity.SUPREME;
 			case SkyblockItemRarity.ADMIN, SkyblockItemRarity.UNKNOWN -> Rarity.UNKNOWN;
+		};
+	}
+
+	public @Nullable Identifier toTooltipStyle() {
+		return switch (this) {
+			case COMMON -> SkyBlockTooltipStyles.COMMON;
+			case UNCOMMON -> SkyBlockTooltipStyles.UNCOMMON;
+			case RARE -> SkyBlockTooltipStyles.RARE;
+			case EPIC -> SkyBlockTooltipStyles.EPIC;
+			case LEGENDARY -> SkyBlockTooltipStyles.LEGENDARY;
+			case MYTHIC -> SkyBlockTooltipStyles.MYTHIC;
+			case DIVINE -> SkyBlockTooltipStyles.DIVINE;
+			case SPECIAL -> SkyBlockTooltipStyles.SPECIAL;
+			case VERY_SPECIAL -> SkyBlockTooltipStyles.VERY_SPECIAL;
+			case ULTIMATE -> SkyBlockTooltipStyles.ULTIMATE;
+			case ADMIN -> SkyBlockTooltipStyles.ADMIN;
+			default -> null;
 		};
 	}
 

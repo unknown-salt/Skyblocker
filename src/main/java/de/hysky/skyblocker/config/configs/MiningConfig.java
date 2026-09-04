@@ -1,11 +1,12 @@
 package de.hysky.skyblocker.config.configs;
 
-import de.hysky.skyblocker.annotations.EnumDisabledValue;
-import net.minecraft.client.resources.language.I18n;
-
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
+
+import net.minecraft.client.resources.language.I18n;
+
+import de.hysky.skyblocker.annotations.EnumDisabledValue;
 
 public class MiningConfig {
 	public boolean enableDrillFuel = true;
@@ -15,11 +16,6 @@ public class MiningConfig {
 	public boolean callMismyla = true;
 
 	public boolean redialOnBadSignal = true;
-
-	/**
-	 * TODO: Move into {@link PickobulusHelper} in next config version.
-	 */
-	public boolean enablePickobulusHelper = true;
 
 	public PickobulusHelper pickobulusHelper = new PickobulusHelper();
 
@@ -41,7 +37,10 @@ public class MiningConfig {
 	public BlockBreakPrediction blockBreakPrediction = new BlockBreakPrediction();
 
 	public static class PickobulusHelper {
-		public boolean enablePickobulusHud = true;
+		public boolean enablePickobulusHelper = true;
+
+		@Deprecated
+		public transient boolean enablePickobulusHud = true;
 
 		public boolean hideHudOnCooldown = false;
 	}
@@ -89,7 +88,8 @@ public class MiningConfig {
 
 		public Color chestHighlightColor = new Color(0, 0, 255, 128);
 
-		public boolean enablePowderTracker = true;
+		@Deprecated
+		public transient boolean enablePowderTracker = true;
 
 		public boolean countNaturalChestsInTracker = true;
 

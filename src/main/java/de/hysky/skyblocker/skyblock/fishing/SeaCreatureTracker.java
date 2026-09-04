@@ -1,13 +1,12 @@
 package de.hysky.skyblocker.skyblock.fishing;
 
-import de.hysky.skyblocker.annotations.Init;
-import de.hysky.skyblocker.config.SkyblockerConfigManager;
-import de.hysky.skyblocker.skyblock.item.SkyblockItemRarity;
-import de.hysky.skyblocker.utils.time.SkyblockTime;
-import de.hysky.skyblocker.utils.render.title.Title;
-import de.hysky.skyblocker.utils.render.title.TitleContainer;
-import de.hysky.skyblocker.utils.scheduler.Scheduler;
+import java.util.LinkedHashMap;
+import java.util.SequencedMap;
+import java.util.regex.Pattern;
+
 import it.unimi.dsi.fastutil.objects.ObjectFloatPair;
+import org.jspecify.annotations.Nullable;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.ChatFormatting;
@@ -17,11 +16,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import org.jspecify.annotations.Nullable;
 
-import java.util.LinkedHashMap;
-import java.util.SequencedMap;
-import java.util.regex.Pattern;
+import de.hysky.skyblocker.annotations.Init;
+import de.hysky.skyblocker.config.SkyblockerConfigManager;
+import de.hysky.skyblocker.skyblock.item.SkyblockItemRarity;
+import de.hysky.skyblocker.skyblock.tabhud.screenbuilder.WidgetManager;
+import de.hysky.skyblocker.utils.render.title.Title;
+import de.hysky.skyblocker.utils.render.title.TitleContainer;
+import de.hysky.skyblocker.utils.scheduler.Scheduler;
+import de.hysky.skyblocker.utils.time.SkyblockTime;
 
 public class SeaCreatureTracker {
 	private static final Minecraft CLIENT = Minecraft.getInstance();
@@ -106,7 +109,7 @@ public class SeaCreatureTracker {
 	 */
 	@SuppressWarnings("SameReturnValue")
 	private static boolean onChatMessage(Component text, boolean overlay) {
-		if (!SkyblockerConfigManager.get().helpers.fishing.enableFishingHud || overlay) return true;
+		if (!WidgetManager.isWidgetInCurrentScreen(FishingHudWidget.getInstance()) || overlay) return true;
 		String message = ChatFormatting.stripFormatting(text.getString());
 		//see if it's a double hook
 		if (DOUBLE_HOOK_PATTERN.matcher(message).find()) {
